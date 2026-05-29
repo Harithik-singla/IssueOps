@@ -1,0 +1,67 @@
+export const ISSUE_STATUS = {
+  BACKLOG: 'BACKLOG',
+  TODO: 'TODO',
+  IN_PROGRESS: 'IN_PROGRESS',
+  IN_REVIEW: 'IN_REVIEW',
+  BLOCKED: 'BLOCKED',
+  DONE: 'DONE',
+  CANCELLED: 'CANCELLED',
+};
+
+export const ISSUE_PRIORITY = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  URGENT: 'URGENT',
+};
+
+export const ISSUE_TYPE = {
+  TASK: 'TASK',
+  BUG: 'BUG',
+  FEATURE: 'FEATURE',
+  DOCUMENTATION: 'DOCUMENTATION',
+  RESEARCH: 'RESEARCH',
+  IMPROVEMENT: 'IMPROVEMENT',
+};
+
+export const MEMBER_ROLES = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  VIEWER: 'VIEWER',
+};
+
+export const AUTOMATION_TRIGGERS = [
+  'ISSUE_CREATED',
+  'ISSUE_STATUS_CHANGED',
+  'ISSUE_ASSIGNED',
+  'COMMENT_CREATED',
+  'DUE_DATE_NEAR',
+  'PRIORITY_CHANGED',
+];
+
+export const AUTOMATION_ACTIONS = [
+  'SEND_NOTIFICATION',
+  'SEND_EMAIL',
+  'TRIGGER_WEBHOOK',
+  'ASSIGN_USER',
+  'ADD_LABEL',
+];
+
+export const WEBHOOK_EVENTS = [
+  'issue.created',
+  'issue.updated',
+  'issue.status_changed',
+  'issue.assigned',
+  'comment.created',
+  'automation.triggered',
+];
+
+export const NOTIFICATION_TYPES = {
+  MENTION: 'MENTION',
+  ASSIGNMENT: 'ASSIGNMENT',
+  STATUS_CHANGE: 'STATUS_CHANGE',
+  DUE_DATE_REMINDER: 'DUE_DATE_REMINDER',
+  WORKSPACE_INVITE: 'WORKSPACE_INVITE',
+  AUTOMATION_ALERT: 'AUTOMATION_ALERT',
+};

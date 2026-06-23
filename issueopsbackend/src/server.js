@@ -7,6 +7,8 @@ import bodyParser from 'body-parser';
 import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
+import workspaceRoutes from './routes/workspaceRoutes.js';
+
 
 const app = express();
 
@@ -30,6 +32,8 @@ app.post('/test', (req, res) => {
 
 // ── Routes ─────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/workspaces', workspaceRoutes);
+
 
 // ── 404 handler ───────────────────────────────────────
 app.use((req, res) => {

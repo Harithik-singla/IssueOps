@@ -8,6 +8,7 @@ import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import workspaceRoutes from './routes/workspaceRoutes.js';
+import projectRoutes   from './routes/projectRoutes.js';
 
 
 const app = express();
@@ -33,6 +34,9 @@ app.post('/test', (req, res) => {
 // ── Routes ─────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
+app.use('/api/workspaces/:workspaceId/projects', projectRoutes);
+app.use('/api/projects', projectRoutes);
+
 
 
 // ── 404 handler ───────────────────────────────────────

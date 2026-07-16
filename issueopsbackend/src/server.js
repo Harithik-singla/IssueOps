@@ -9,6 +9,7 @@ import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import workspaceRoutes from './routes/workspaceRoutes.js';
 import projectRoutes   from './routes/projectRoutes.js';
+import issueRoutes from './routes/issueRoutes.js';
 
 
 const app = express();
@@ -16,7 +17,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 app.use(morgan('dev'));
-app.use(bodyParser.json());
+app.use(bodyParser.json()); 
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // ── Health check ───────────────────────────────────────
@@ -36,6 +37,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/workspaces/:workspaceId/projects', projectRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/projects/:projectId/issues', issueRoutes);
+app.use('/api/issues', issueRoutes);
+app.use('/api/workspaces/:workspaceId/issues', issueRoutes);
 
 
 

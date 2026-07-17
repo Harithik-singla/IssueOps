@@ -2,7 +2,7 @@ import Issue from '../models/Issue.js';
 import Project from '../models/Project.js';
 import WorkspaceMember from '../models/WorkspaceMember.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
-
+import {createAssignmentNotification,createStatusChangeNotification} from '../utils/notificationService.js';
 // ── Helper — check workspace membership ───────────────
 const getMembership = async (workspaceId, userId) => {
   return await WorkspaceMember.findOne({
@@ -65,6 +65,15 @@ export const createIssue = async (req, res) => {
       { path: 'project',  select: 'name color' },
     ]);
 
+    if (issue.assignee && issue.assignee._id) {
+        await createAssignmentNotification({
+        assignee:   issue.assignee._id,
+        triggeredBy: { _id: req.user.id, name: req.user.name },
+        workspace:  issue.workspace,
+        issue:      issue._id,
+        issueTitle: issue.title,
+        });
+    }
     return sendSuccess(res, { issue }, 'Issue created successfully', 201);
   } catch (error) {
     console.error('createIssue error:', error);
@@ -200,7 +209,9 @@ export const updateIssue = async (req, res) => {
     )
       .populate('assignee', 'name email')
       .populate('reporter', 'name email');
-
+      
+    // Notify reporter and assignee about status change
+    
     return sendSuccess(res, { issue: updated }, 'Issue updated successfully');
   } catch (error) {
     console.error('updateIssue error:', error);
@@ -244,6 +255,23 @@ export const updateIssueStatus = async (req, res) => {
       .populate('assignee', 'name email')
       .populate('reporter', 'name email');
 
+      const recipients = [];
+    if (updated.reporter) recipients.push(updated.reporter._id);
+    if (updated.assignee) recipients.push(updated.assignee._id);
+
+    await Promise.all(
+    recipients.map((recipientId) =>
+        createStatusChangeNotification({
+        recipient:   recipientId,
+        triggeredBy: { _id: req.user.id, name: req.user.name },
+        workspace:   updated.workspace,
+        issue:       updated._id,
+        issueTitle:  updated.title,
+        oldStatus,
+        newStatus:   status,
+        })
+    )
+    );
     return sendSuccess(
       res,
       { issue: updated, oldStatus },

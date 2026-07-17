@@ -10,6 +10,8 @@ import authRoutes from './routes/authRoutes.js';
 import workspaceRoutes from './routes/workspaceRoutes.js';
 import projectRoutes   from './routes/projectRoutes.js';
 import issueRoutes from './routes/issueRoutes.js';
+import commentRoutes from './routes/commentRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 
 const app = express();
@@ -40,6 +42,10 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/issues', issueRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/workspaces/:workspaceId/issues', issueRoutes);
+app.use('/api/issues/:issueId/comments', commentRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 
 
 

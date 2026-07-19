@@ -12,6 +12,9 @@ import projectRoutes   from './routes/projectRoutes.js';
 import issueRoutes from './routes/issueRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import automationRoutes from './routes/automationRoutes.js';
+
 
 
 const app = express();
@@ -45,8 +48,9 @@ app.use('/api/workspaces/:workspaceId/issues', issueRoutes);
 app.use('/api/issues/:issueId/comments', commentRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/notifications', notificationRoutes);
-
-
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/workspaces/:workspaceId/automation-rules', automationRoutes);
+app.use('/api/automation-rules', automationRoutes)
 
 
 // ── 404 handler ───────────────────────────────────────

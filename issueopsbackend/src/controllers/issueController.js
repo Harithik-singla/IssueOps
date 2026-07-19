@@ -3,6 +3,8 @@ import Project from '../models/Project.js';
 import WorkspaceMember from '../models/WorkspaceMember.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
 import {createAssignmentNotification,createStatusChangeNotification} from '../utils/notificationService.js';
+import { runAutomationRules } from '../utils/automationEngine.js';
+
 // ── Helper — check workspace membership ───────────────
 const getMembership = async (workspaceId, userId) => {
   return await WorkspaceMember.findOne({
@@ -74,6 +76,12 @@ export const createIssue = async (req, res) => {
         issueTitle: issue.title,
         });
     }
+
+    await runAutomationRules({
+  trigger:     'ISSUE_CREATED',
+  issue:       issue.toObject(),
+  triggeredBy: { _id: req.user.id, name: req.user.name },
+});
     return sendSuccess(res, { issue }, 'Issue created successfully', 201);
   } catch (error) {
     console.error('createIssue error:', error);
@@ -272,6 +280,12 @@ export const updateIssueStatus = async (req, res) => {
         })
     )
     );
+
+    await runAutomationRules({
+  trigger:     'ISSUE_STATUS_CHANGED',
+  issue:       { ...updated.toObject(), status },
+  triggeredBy: { _id: req.user.id, name: req.user.name },
+  });
     return sendSuccess(
       res,
       { issue: updated, oldStatus },

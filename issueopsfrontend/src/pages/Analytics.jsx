@@ -6,6 +6,10 @@ import { TrendingUp, Clock, AlertTriangle, XCircle, Award, CheckCircle } from 'l
 import { Card } from '../components/ui/index';
 import { mockAnalytics } from '../data/mockData';
 import AppLayout from '../components/layout/AppLayout';
+import { useQuery } from '@tanstack/react-query';
+import { analyticsApi } from '../api/analyticsApi';
+import { workspaceApi } from '../api/workspaceApi';
+
 
 const STATUS_COLORS  = ['#94a3b8', '#60a5fa', '#fbbf24', '#a78bfa', '#f87171', '#34d399'];
 const PRIORITY_COLORS = ['#94a3b8', '#fbbf24', '#f97316', '#ef4444'];
@@ -38,7 +42,32 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Analytics() {
-  const { metrics, issuesByStatus, issuesByPriority, weeklyCompleted, memberWorkload, overdueByProject } = mockAnalytics;
+  const { data: wsData } = useQuery({
+  queryKey: ['workspaces'],
+  queryFn:  () => workspaceApi.getAll().then(r => r.data.data.workspaces),
+});
+const workspaceId = wsData?.[0]?._id;
+
+const { data, isLoading } = useQuery({
+  queryKey: ['analytics', workspaceId],
+  enabled:  !!workspaceId,
+  queryFn:  () => analyticsApi.getWorkspaceAnalytics(workspaceId).then(r => r.data.data),
+});
+
+  const analytics = data || {
+  issuesByStatus:   [],
+  issuesByPriority: [],
+  weeklyCompleted:  [],
+  memberWorkload:   [],
+  overdueByProject: [],
+  metrics: {
+    completionRate:    0,
+    avgCompletionDays: 0,
+    blockedCount:      0,
+    overdueCount:      0,
+    mostActiveMember:  'N/A',
+  },
+};
 
   return (
     <AppLayout>

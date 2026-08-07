@@ -1,5 +1,6 @@
 import Notification from '../models/Notification.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { getIO } from '../socket/index.js';
 
 // ── Get all notifications for current user ─────────────
 export const getNotifications = async (req, res) => {

@@ -112,9 +112,72 @@ function Column({ column, issues }) {
 }
 
 export default function Kanban() {
-  const [issues, setIssues] = useState(mockIssues);
+  const queryClient = useQueryClient();
+  const { socket }  = useSocket();
   const [activeIssue, setActiveIssue] = useState(null);
 
+  const { data: wsData } = useQuery({
+    queryKey: ['workspaces'],
+    queryFn:  () => workspaceApi.getAll().then(r => r.data.data.workspaces),
+  });  
+
+  const workspaceId = wsData?.[0]?._id;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['kanban-issues', workspaceId],
+    enabled:  !!workspaceId,
+    queryFn:  () => issueApi.getByProject
+      ? workspaceId
+        ? fetch(`${import.meta.env.VITE_API_URL}/workspaces/${workspaceId}/issues`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('issueops_token')}` }
+          }).then(r => r.json()).then(r => r.data.issues)
+        : []
+      : [],
+  });
+
+  const [issues, setIssues] = useState([]);
+
+  useEffect(() => {
+    if (data) setIssues(data);
+  }, [data]);
+
+  useEffect(() => {
+    if (!socket || !workspaceId) return;
+
+    socket.emit('join:room', `workspace:${workspaceId}`);
+
+    socket.on('issue:status_changed', ({ issueId, newStatus }) => {
+      setIssues(prev =>
+        prev.map(i => i._id === issueId ? { ...i, status: newStatus } : i)
+      );
+    });
+
+    socket.on('issue:created', ({ issue }) => {
+      setIssues(prev => [...prev, issue]);
+    });
+
+    socket.on('issue:deleted', ({ issueId }) => {
+      setIssues(prev => prev.filter(i => i._id !== issueId));
+    });
+
+    return () => {
+      socket.off('issue:status_changed');
+      socket.off('issue:created');
+      socket.off('issue:deleted');
+    };
+  }, [socket, workspaceId]);
+
+  const statusMutation = useMutation({
+    mutationFn: ({ issueId, status }) => issueApi.updateStatus(issueId, status),
+    onError: (err, { issueId, oldStatus }) => {
+      // Revert on failure
+      setIssues(prev =>
+        prev.map(i => i._id === issueId ? { ...i, status: oldStatus } : i)
+      );
+      toast.error('Failed to update status');
+    },
+  });
+  
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -134,6 +197,11 @@ export default function Kanban() {
 
     // Call backend when ready:
     // issueApi.updateStatus(issue.id, over.id).catch(() => setIssues(prev => prev.map(i => i.id === issue.id ? { ...i, status: issue.status } : i)));
+    statusMutation.mutate({
+      issueId: issue._id,
+      status:  over.id,
+      oldStatus,
+    });
   };
 
   const issuesByStatus = (status) => issues.filter(i => i.status === status);

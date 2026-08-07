@@ -2,6 +2,7 @@ import Comment from '../models/Comment.js';
 import Issue from '../models/Issue.js';
 import WorkspaceMember from '../models/WorkspaceMember.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { getIO } from '../socket/index.js';
 
 // ── Helper ─────────────────────────────────────────────
 const getMembership = async (workspaceId, userId) => {
@@ -48,7 +49,11 @@ export const createComment = async (req, res) => {
 
     // 5. Populate author before responding
     await comment.populate('author', 'name email');
-
+    try {
+  getIO()
+    .to(`workspace:${comment.workspace}`)
+    .emit('comment:created', { comment });
+} catch (_) {}
     return sendSuccess(res, { comment }, 'Comment posted successfully', 201);
   } catch (error) {
     console.error('createComment error:', error);

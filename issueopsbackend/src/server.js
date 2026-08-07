@@ -15,6 +15,8 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import automationRoutes from './routes/automationRoutes.js';
 
+import { initSocket } from './socket/index.js'; 
+
 
 
 const app = express();
@@ -30,12 +32,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-//test
-app.post('/test', (req, res) => {
-  console.log('body:', req.body);
-  console.log('headers:', req.headers);
-  res.json({ body: req.body });
-});
 
 // ── Routes ─────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
@@ -62,8 +58,12 @@ const httpServer = http.createServer(app);
 
 const start = async () => {
   await connectDB();
+  
+  initSocket(httpServer);  // ← initialize AFTER db connects
+  
   httpServer.listen(ENV.PORT, () => {
     console.log(`🚀 Server running on http://localhost:${ENV.PORT}`);
+    console.log(`🔌 Socket.IO ready`);
   });
 };
 

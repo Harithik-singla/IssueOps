@@ -8,6 +8,9 @@ import { formatTimeAgo } from '../utils/formatDate';
 import { mockNotifications } from '../data/mockData';
 import { NOTIFICATION_TYPES } from '../utils/constants';
 import AppLayout from '../components/layout/AppLayout';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notificationApi } from '../api/notificationApi';
+import toast from 'react-hot-toast';
 
 const typeConfig = {
   MENTION:           { icon: MessageSquare, color: 'bg-blue-100 text-blue-600',   label: 'Mention' },
@@ -19,18 +22,38 @@ const typeConfig = {
 };
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState(mockNotifications);
-  const [filter, setFilter] = useState('all');
+  const queryClient = useQueryClient();
 
-  const markRead = (id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  const clearRead = () => setNotifications(prev => prev.filter(n => !n.read));
+  const { data, isLoading } = useQuery({
+    queryKey: ['notifications'],
+    queryFn:  () => notificationApi.getAll().then(r => r.data.data.notifications),
+    refetchInterval: 30000, // refetch every 30 seconds
+  });  const [filter, setFilter] = useState('all');
+
+  const notifications = data || [];
+  const unreadCount   = notifications.filter(n => !n.read).length;
+
+
+  const markReadMutation = useMutation({
+  mutationFn: (id) => notificationApi.markRead(id),
+  onSuccess:  () => queryClient.invalidateQueries(['notifications']),
+});
+
+  const markAllMutation = useMutation({
+    mutationFn: () => notificationApi.markAllRead(),
+    onSuccess:  () => {
+      queryClient.invalidateQueries(['notifications']);
+      toast.success('All marked as read');
+    },
+  });
+
+  const markRead = (id) => markReadMutation.mutate(id);
+  const markAllRead = () => markAllMutation.mutate();
 
   const filtered = filter === 'unread'
     ? notifications.filter(n => !n.read)
     : notifications;
 
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <AppLayout>

@@ -4,7 +4,7 @@ import WorkspaceMember from '../models/WorkspaceMember.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
 import {createAssignmentNotification,createStatusChangeNotification} from '../utils/notificationService.js';
 import { runAutomationRules } from '../utils/automationEngine.js';
-
+import { getIO } from '../socket/index.js';
 // ── Helper — check workspace membership ───────────────
 const getMembership = async (workspaceId, userId) => {
   return await WorkspaceMember.findOne({
@@ -82,6 +82,11 @@ export const createIssue = async (req, res) => {
   issue:       issue.toObject(),
   triggeredBy: { _id: req.user.id, name: req.user.name },
 });
+  try {
+    getIO()
+      .to(`workspace:${issue.workspace}`)
+      .emit('issue:created', { issue });
+  } catch (_) {}
     return sendSuccess(res, { issue }, 'Issue created successfully', 201);
   } catch (error) {
     console.error('createIssue error:', error);
@@ -219,7 +224,11 @@ export const updateIssue = async (req, res) => {
       .populate('reporter', 'name email');
       
     // Notify reporter and assignee about status change
-    
+    try {
+  getIO()
+    .to(`workspace:${updated.workspace}`)
+    .emit('issue:updated', { issue: updated });
+} catch (_) {}
     return sendSuccess(res, { issue: updated }, 'Issue updated successfully');
   } catch (error) {
     console.error('updateIssue error:', error);
@@ -286,6 +295,17 @@ export const updateIssueStatus = async (req, res) => {
   issue:       { ...updated.toObject(), status },
   triggeredBy: { _id: req.user.id, name: req.user.name },
   });
+
+  try {
+  getIO()
+    .to(`workspace:${updated.workspace}`)
+    .emit('issue:status_changed', {
+      issueId:   updated._id,
+      newStatus: status,
+      oldStatus,
+      updatedBy: req.user.name,
+    });
+} catch (_) {}
     return sendSuccess(
       res,
       { issue: updated, oldStatus },
@@ -318,7 +338,11 @@ export const deleteIssue = async (req, res) => {
     // Delete related comments
     const Comment = (await import('../models/Comment.js')).default;
     await Comment.deleteMany({ issue: issueId });
-
+    try {
+  getIO()
+    .to(`workspace:${issue.workspace}`)
+    .emit('issue:deleted', { issueId });
+} catch (_) {}
     return sendSuccess(res, {}, 'Issue deleted successfully');
   } catch (error) {
     console.error('deleteIssue error:', error);
